@@ -10,6 +10,7 @@ This sample makes use of the following NuGet Packages
 
 [MapSuite 10.0.0](https://www.nuget.org/packages?q=ThinkGeo)
 
+
 ### About the Code
 >**Search the specific point and return best-matching places with nearbys**
 ```cs
