@@ -5,11 +5,15 @@ In this sample, we show how you can use Map Suite [World Reverse Geocoding SDK](
 
 ![Screenshot](https://github.com/ThinkGeo/PlaceSearchWorldReverseGeocodingSample-ForWpf/blob/master/Screenshot.gif)
 
+
 ### Requirements
 This sample makes use of the following NuGet Packages
 
 [MapSuite 10.0.0](https://www.nuget.org/packages?q=ThinkGeo)
 
+### What areas does the World Reverse Geocoding cover?
+
+![World Reverse Geocoding Data Coverage](https://github.com/ThinkGeo/PlaceSearchWorldReverseGeocodingSample-ForWpf/blob/master/reverse%20geocoding%20data%20coverage.png)
 
 ### About the Code
 >**Search the specific point and return best-matching places with nearbys**
