@@ -7,7 +7,7 @@ using System.Windows.Documents;
 using System.Windows.Media.Imaging;
 using ThinkGeo.MapSuite.WorldReverseGeocoding;
 
-namespace PlaceSearchWorldReverseGeocoding.UserControls
+namespace ThinkGeo.MapSuite.PlaceSearchWorldReverseGeocodingSamples.UserControls
 {
     /// <summary>
     /// Interaction logic for IntersectionViewItem.xaml

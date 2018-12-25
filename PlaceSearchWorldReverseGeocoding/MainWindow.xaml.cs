@@ -9,13 +9,13 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ThinkGeo.MapSuite.Drawing;
 using ThinkGeo.MapSuite.Layers;
+using ThinkGeo.MapSuite.WorldReverseGeocoding;
 using ThinkGeo.MapSuite.Shapes;
 using ThinkGeo.MapSuite.Styles;
 using ThinkGeo.MapSuite.Wpf;
-using ThinkGeo.MapSuite.WorldReverseGeocoding;
-using ThinkGeo.MapSuite;
+using System.Linq;
 
-namespace PlaceSearchWorldReverseGeocoding
+namespace ThinkGeo.MapSuite.PlaceSearchWorldReverseGeocodingSamples
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -23,8 +23,10 @@ namespace PlaceSearchWorldReverseGeocoding
     public partial class MainWindow : Window
     {
         private OsmReverseGeocoder osmReverseGeocoder;
-        private PlaceReverseGeocoderResult searchResult;
+        private ReverseGeocoderResult searchResult;
         private Collection<Place> serachedPlaces;
+        private Collection<Place> serachedAddress;
+        private Collection<Place> serachedIntersetions;
 
         private PointShape searchPoint;
         private SimpleMarkerOverlay bestmatchingMarkerOverlay;
@@ -32,21 +34,27 @@ namespace PlaceSearchWorldReverseGeocoding
         private InMemoryFeatureLayer seachRadiusFeatureLayer;
         private InMemoryFeatureLayer resultGeometryFeatureLayer;
 
+        private Proj4Projection projection;
+
         public MainWindow()
         {
             InitializeComponent();
 
             // Initialize the osmReverseGeocoder with the testing SQLiteDatabase.
             osmReverseGeocoder = new OsmReverseGeocoder(ConfigurationManager.ConnectionStrings["SQLiteConnectionString"].ConnectionString);
+
+            projection = new Proj4Projection(4326, 3857);
+            projection.Open();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            wpfMap.MapUnit = GeographyUnit.DecimalDegree;
+            wpfMap.MapUnit = GeographyUnit.Meter;
+            wpfMap.ZoomLevelSet = ThinkGeoCloudMapsOverlay.GetZoomLevelSet();
 
             // Add background map.
-            WorldStreetsAndImageryOverlay baseOverlay = new WorldStreetsAndImageryOverlay();
-            baseOverlay.Projection = WorldStreetsAndImageryProjection.DecimalDegrees;
+            // Add ThinkGeoCloudMapsOverlay as basemap
+            ThinkGeoCloudMapsOverlay baseOverlay = new ThinkGeoCloudMapsOverlay();
             wpfMap.Overlays.Add(baseOverlay);
 
             // Add marker overlay for showing the best matching place.
@@ -72,13 +80,14 @@ namespace PlaceSearchWorldReverseGeocoding
             searchResultOverlay.Layers.Add("SerachRadiusFeatureLayer", seachRadiusFeatureLayer);
             wpfMap.Overlays.Add("SearchResult", searchResultOverlay);
 
-            wpfMap.CurrentExtent = new RectangleShape(-96.92379, 33.22117, -96.73, 33.07745);
+            wpfMap.CurrentExtent = new RectangleShape(-10789506, 3924697, -10767934, 3905588);
             wpfMap.Refresh();
 
             // Bind search categories to comboxList.
             nearbySearchCategory.ItemsSource = new List<string>() { "None", "Common", "All", "Customized" };
             nearbySearchCategory.SelectedIndex = 2;
         }
+
 
         private void SearchPlaceAndNearbys()
         {
@@ -87,11 +96,22 @@ namespace PlaceSearchWorldReverseGeocoding
 
             searchPoint = GetSearchPoint();
 
+            // osmReverseGeocoder only support 4326, we need convert point to 4326
+            var projectedSearchPoint = (PointShape)projection.ConvertToInternalProjection(searchPoint);
             // Create the searchPreference by UI controls.
             SearchPreference searchPreference = GetSearchPreferenceFromUI();
-            searchResult = osmReverseGeocoder.Search(searchPoint, searchPreference);
+            searchResult = osmReverseGeocoder.Search(projectedSearchPoint, searchPreference);
             if (searchResult != null)
             {
+                // convert result to 3857
+                foreach (var place in searchResult.Nearby)
+                {
+                    place.Geometry = projection.ConvertToExternalProjection(place.Geometry);
+                    var point = projection.ConvertToExternalProjection(place.CenterLongitude, place.CenterLatitude);
+                    place.CenterLongitude = point.X;
+                    place.CenterLatitude = point.Y;
+                }
+
                 // Update search result to map markers.
                 DisplaySearchResult(searchResult);
 
@@ -123,31 +143,41 @@ namespace PlaceSearchWorldReverseGeocoding
                 resultGeometryFeatureLayer.InternalFeatures.Clear();
                 seachRadiusFeatureLayer.InternalFeatures.Clear();
 
+                AddSearchPointToMap(searchPoint);
                 if (tabSearchResult.SelectedIndex == 0) // Nearby Addresses Tab 
                 {
-                    AddSearchRadius(Convert.ToDouble(searchRadius.Text, CultureInfo.InvariantCulture));
+                    AddSearchRadius(Convert.ToDouble(maxSearchIntersectionRadius.Text, CultureInfo.InvariantCulture));
 
-                    for (int i = 0; i < searchResult.Addresses.Count; i++)
+                    for (int i = 0; i < serachedPlaces.Count; i++)
                     {
-                        AddMarkerToMap(searchResult.Addresses[i], i);
+                        if (serachedPlaces[i] != searchResult.BestMatch)
+                        {
+                            AddMarkerToMap(serachedPlaces[i], i);
+                        }
                     }
                 }
                 else if (tabSearchResult.SelectedIndex == 1) // Nearby Intersections Tab
                 {
-                    AddSearchRadius(Convert.ToDouble(searchIntersectionRadius.Text, CultureInfo.InvariantCulture));
+                    AddSearchRadius(Convert.ToDouble(maxSearchIntersectionRadius.Text, CultureInfo.InvariantCulture));
 
-                    for (int i = 0; i < searchResult.Intersections.Count; i++)
+                    for (int i = 0; i < serachedIntersetions.Count; i++)
                     {
-                        AddMarkerToMap(searchResult.Intersections[i], i);
+                        if (serachedIntersetions[i] != searchResult.BestMatch)
+                        {
+                            AddMarkerToMap(serachedIntersetions[i], i);
+                        }
                     }
                 }
                 else if (tabSearchResult.SelectedIndex == 2) // Nearby Places Tab
                 {
-                    AddSearchRadius(Convert.ToDouble(searchRadius.Text, CultureInfo.InvariantCulture));
+                    AddSearchRadius(Convert.ToDouble(maxSearchIntersectionRadius.Text, CultureInfo.InvariantCulture));
 
-                    for (int i = 0; i < serachedPlaces.Count; i++)
+                    for (int i = 0; i < serachedAddress.Count; i++)
                     {
-                        AddMarkerToMap(serachedPlaces[i], i);
+                        if (serachedAddress[i] != searchResult.BestMatch)
+                        {
+                            AddMarkerToMap(serachedAddress[i], i);
+                        }
                     }
                 }
                 wpfMap.CurrentExtent = seachRadiusFeatureLayer.GetBoundingBox();
@@ -155,40 +185,79 @@ namespace PlaceSearchWorldReverseGeocoding
             }
         }
 
-        private void DisplaySearchResult(PlaceReverseGeocoderResult searchResult)
+        private void DisplaySearchResult(ReverseGeocoderResult searchResult)
         {
-            if (searchResult != null && searchResult.BestMatchingPlace != null)
+            if (searchResult != null && searchResult.BestMatch != null)
             {
                 // Display address of the BestMatchingPlace in the left panel and add a marker.
-                txtBestMatchingPlace.Text = searchResult.BestMatchingPlace.Address;
-                Marker marker = CreateMarkerByCategory("BestMatchingPlace", searchPoint, searchResult.BestMatchingPlace.Address);
+                if (searchResult.BestMatch is Intersection)
+                {
+                    Intersection intersection = (Intersection)searchResult.BestMatch;
+                    string roadInfos = string.Empty;
+                    List<string> roadNames = intersection.Description.Split(',').ToList();
+                    string lastRoadName = roadNames[roadNames.Count - 1];
+                    roadNames.RemoveAt(roadNames.Count - 1);
+
+                    txtBestMatchingPlace.Text = string.Format("Intersection between {0} and {1} in {2}", string.Join(", ", roadNames), lastRoadName, intersection.Address);
+                }
+                else
+                {
+                    txtBestMatchingPlace.Text = searchResult.BestMatch.Address;
+                }
+
+
+                // the best mach disctance is samller than 200 meter. if not, it sholud be a larger area place
+                var distance1 = searchResult.BestMatch.Geometry.GetDistanceTo(searchPoint, GeographyUnit.Meter, DistanceUnit.Meter);
+                // The distance between SearchPoint and the center of BestMatch. 
+                PointShape bestMatchGeometry = searchResult.BestMatch.Geometry.GetCenterPoint();
+                var distance2 = bestMatchGeometry.GetDistanceTo(searchPoint, GeographyUnit.Meter, DistanceUnit.Meter);
+
+                if (distance1 == 0)
+                {
+                    // BestMatch contains search point 
+                    if (distance2 > 210)
+                    {
+                        bestMatchGeometry = searchPoint;
+                    }
+                }
+
+                Marker marker = CreateMarkerByCategory("BestMatchingPlace", bestMatchGeometry, searchResult.BestMatch.Address);
                 bestmatchingMarkerOverlay.Markers.Add(marker);
 
                 // Add index,distance and direction for addresses, places and intersections.
-                for (int i = 0; i < searchResult.Intersections.Count; i++)
-                {
-                    AddPropertiesForPlace(searchResult.Intersections[i], i);
-                }
-                for (int i = 0; i < searchResult.Addresses.Count; i++)
-                {
-                    AddPropertiesForPlace(searchResult.Addresses[i], i);
-                }
-
                 int placeIndex = 0;
-                foreach (Place place in searchResult.Places)
+                int intersectionIndex = 0;
+                int addressIndex = 0;
+
+                foreach (Place place in searchResult.Nearby)
                 {
-                    if (place.PlaceCategory != PlaceCategory.Highway && place.PlaceCategory != PlaceCategory.Road && place.PlaceCategory != PlaceCategory.Path && place.PlaceCategory != PlaceCategory.LinkRoad)
+                    if (place.PlaceCategory != PlaceCategories.Road)
                     {
-                        serachedPlaces.Add(place);
-                        AddPropertiesForPlace(place, placeIndex);
-                        placeIndex++;
+                        if (place.PlaceCategory.ToString().Contains(PlaceCategories.AddressPoint.ToString()) || (string.IsNullOrEmpty(place.Name) && !string.IsNullOrEmpty(place.HouseNumber)))
+                        {
+                            serachedAddress.Add(place);
+                            AddPropertiesForPlace(place, addressIndex);
+                            addressIndex++;
+                        }
+                        else if (place.PlaceCategory.ToString().Contains(PlaceCategories.Intersection.ToString()))
+                        {
+                            serachedIntersetions.Add(place);
+                            AddPropertiesForPlace(place, intersectionIndex);
+                            intersectionIndex++;
+                        }
+                        else
+                        {
+                            serachedPlaces.Add(place);
+                            AddPropertiesForPlace(place, placeIndex);
+                            placeIndex++;
+                        }
                     }
                 }
 
                 // Bind addresses,intersections,places to listbox.
-                lsbAddress.ItemsSource = searchResult.Addresses;
+                lsbAddress.ItemsSource = serachedAddress;
                 lsbPlaces.ItemsSource = serachedPlaces;
-                lsbIntersection.ItemsSource = searchResult.Intersections;
+                lsbIntersection.ItemsSource = serachedIntersetions;
             }
         }
 
@@ -244,7 +313,7 @@ namespace PlaceSearchWorldReverseGeocoding
             {
                 marker.Width = 32;
                 marker.Height = 32;
-                marker.YOffset = -10;
+                marker.YOffset = -16;
             }
 
             return marker;
@@ -261,8 +330,16 @@ namespace PlaceSearchWorldReverseGeocoding
             {
                 pointShape = place.Geometry.GetCenterPoint();
             }
-
-            return CreateMarkerByCategory(place.PlaceCategory.ToString().ToLower(), pointShape, string.Empty);
+            string category = null;
+            if (place.PlaceCategory.ToString().Contains(","))
+            {
+                category = place.PlaceCategory.ToString().Split(',')[1].ToLower().Trim();
+            }
+            else
+            {
+                category = place.PlaceCategory.ToString().ToLower();
+            }
+            return CreateMarkerByCategory(category, pointShape, string.Empty);
         }
 
         private SearchPreference GetSearchPreferenceFromUI()
@@ -270,20 +347,28 @@ namespace PlaceSearchWorldReverseGeocoding
             // Set parameters for searchPreference.
             SearchPreference searchPreference = new SearchPreference()
             {
-                PlaceSearchRadiusInMeter = Convert.ToDouble(searchRadius.Text, CultureInfo.InvariantCulture),
-                IntersectionSearchRadiusInMeter = Convert.ToDouble(searchIntersectionRadius.Text, CultureInfo.InvariantCulture),
-                IncludedIntersection = true,
-                MaxResultCount = 50
+                MaxSearchRadiusInMeter = Convert.ToDouble(maxSearchIntersectionRadius.Text, CultureInfo.InvariantCulture),
+                ResultMode = ResultMode.Verbose,
+                MaxResultCount = 20
             };
 
             // Read the search categories for nearbys.
-            if (nearbySearchCategory.SelectedIndex <= 2)
+            if (nearbySearchCategory.SelectedIndex == 0)
             {
-                searchPreference.NearbyPlaceCategory = (PlaceCategory)nearbySearchCategory.SelectedIndex;
+                searchPreference.NearbyPlaceCategories = PlaceCategories.None;
+            }
+            else if (nearbySearchCategory.SelectedIndex == 1)
+            {
+                searchPreference.NearbyPlaceCategories = PlaceCategories.Common;
+            }
+            else if (nearbySearchCategory.SelectedIndex == 2)
+            {
+                searchPreference.NearbyPlaceCategories = PlaceCategories.All;
             }
             else
             {
-                Collection<PlaceCategory> searchPlaceCategoriesForNearBy = new Collection<PlaceCategory>();
+                searchPreference.NearbyPlaceCategories = PlaceCategories.None;
+                Collection<PlaceCategories> searchPlaceCategoriesForNearBy = new Collection<PlaceCategories>();
                 for (int i = 0; i < categoryGrid.Children.Count; i++)
                 {
                     if (categoryGrid.Children[i] is CheckBox)
@@ -291,8 +376,8 @@ namespace PlaceSearchWorldReverseGeocoding
                         CheckBox category = (CheckBox)categoryGrid.Children[i];
                         if (category.IsChecked == true)
                         {
-                            PlaceCategory selectedCategory = (PlaceCategory)(Convert.ToInt32(category.Tag, CultureInfo.InvariantCulture));
-                            searchPreference.NearbyPlaceCategory = searchPreference.NearbyPlaceCategory | selectedCategory;
+                            PlaceCategories selectedCategory = (PlaceCategories)(Convert.ToInt32(category.Tag, CultureInfo.InvariantCulture));
+                            searchPreference.NearbyPlaceCategories = searchPreference.NearbyPlaceCategories | selectedCategory;
                         }
                     }
                 }
@@ -317,6 +402,8 @@ namespace PlaceSearchWorldReverseGeocoding
             lsbAddress.ItemsSource = null;
             lsbIntersection.ItemsSource = null;
             serachedPlaces = new Collection<Place>();
+            serachedIntersetions = new Collection<Place>();
+            serachedAddress = new Collection<Place>();
             bestmatchingMarkerOverlay.Markers.Clear();
         }
 
@@ -333,15 +420,16 @@ namespace PlaceSearchWorldReverseGeocoding
         private void AddMarkerToMap(object reverseGeocoderRecord, int index)
         {
             Marker marker = null;
-            if (reverseGeocoderRecord is Place)
+
+            if (reverseGeocoderRecord is Intersection)
+            {
+                marker = CreateMarkerByCategory("intersection", (reverseGeocoderRecord as Intersection).Location, (reverseGeocoderRecord as Intersection).Address);
+            }
+            else
             {
                 marker = GetMarkerByPlaceRecord(reverseGeocoderRecord as Place);
                 marker.ToolTip = (reverseGeocoderRecord as Place).Address;
                 resultGeometryFeatureLayer.InternalFeatures.Add(new Feature((reverseGeocoderRecord as Place).Geometry));
-            }
-            else
-            {
-                marker = CreateMarkerByCategory("intersection", (reverseGeocoderRecord as Intersection).Location, (reverseGeocoderRecord as Intersection).Address);
             }
             marker.FontSize = 15;
             marker.Content = new TextBlock()
@@ -355,27 +443,40 @@ namespace PlaceSearchWorldReverseGeocoding
             nearbysMarkerOverlay.Markers.Add(marker);
         }
 
+        private void AddSearchPointToMap(PointShape searchPoint)
+        {
+            Marker searchPointMarker = new Marker(searchPoint)
+            {
+                Width = 32,
+                Height = 32,
+                ImageSource = new BitmapImage(new Uri("/Resources/searchPoint.png", UriKind.RelativeOrAbsolute)),
+                ToolTip = "Search Point"
+            };
+            searchPointMarker.YOffset = -16;
+            nearbysMarkerOverlay.Markers.Add(searchPointMarker);
+        }
+
         private void AddSearchRadius(double searchDistanceInMeters)
         {
-            double searchDistance = DecimalDegreesHelper.GetLongitudeDifferenceFromDistance(searchDistanceInMeters, DistanceUnit.Meter, searchPoint.Y);
-            seachRadiusFeatureLayer.InternalFeatures.Add(new Feature(new EllipseShape(searchPoint, searchDistance)));
+            seachRadiusFeatureLayer.InternalFeatures.Add(new Feature(new EllipseShape(searchPoint, searchDistanceInMeters)));
         }
 
         private void AddPropertiesForPlace(object reverseGeocoderRecord, int index)
         {
-            if (reverseGeocoderRecord is Place)
-            {
-                int distance = (int)searchPoint.GetDistanceTo((reverseGeocoderRecord as Place).Geometry, GeographyUnit.DecimalDegree, DistanceUnit.Meter);
-
-                (reverseGeocoderRecord as Place).Properties.Add("index", (index + 1).ToString());
-                (reverseGeocoderRecord as Place).Properties.Add("distance", distance.ToString());
-                (reverseGeocoderRecord as Place).Properties.Add("direction", GetDirectionBetweenTwoPoints(searchPoint, (reverseGeocoderRecord as Place).Geometry.GetCenterPoint()));
-            }
-            else
+            if (reverseGeocoderRecord is Intersection)
             {
                 (reverseGeocoderRecord as Intersection).OptionalNames.Add("index", (index + 1).ToString());
                 (reverseGeocoderRecord as Intersection).OptionalNames.Add("distance", (reverseGeocoderRecord as Intersection).GetDistanceTo(searchPoint, DistanceUnit.Meter).ToString());
                 (reverseGeocoderRecord as Intersection).OptionalNames.Add("direction", (reverseGeocoderRecord as Intersection).GetDirectionFrom(searchPoint).ToString());
+            }
+            else
+            {
+                int distance = (int)searchPoint.GetDistanceTo((reverseGeocoderRecord as Place).Geometry, GeographyUnit.Meter, DistanceUnit.Meter);
+
+                (reverseGeocoderRecord as Place).Properties.Add("index", (index + 1).ToString());
+                (reverseGeocoderRecord as Place).Properties.Add("distance", distance.ToString());
+                (reverseGeocoderRecord as Place).Properties.Add("direction", GetDirectionBetweenTwoPoints(searchPoint, (reverseGeocoderRecord as Place).Geometry.GetCenterPoint()));
+
             }
         }
 
@@ -386,19 +487,19 @@ namespace PlaceSearchWorldReverseGeocoding
 
             if (firstPoint.Y > secondPoint.Y)
             {
-                southNorthDirection = "South";
+                southNorthDirection = "south";
             }
             else
             {
-                southNorthDirection = "North";
+                southNorthDirection = "north";
             }
             if (firstPoint.X > secondPoint.X)
             {
-                eastWestDirection = "West";
+                eastWestDirection = "west";
             }
             else
             {
-                eastWestDirection = "East";
+                eastWestDirection = "east";
             }
 
             // If the slope is greater than 3, it think the direction is south or north.
@@ -419,6 +520,5 @@ namespace PlaceSearchWorldReverseGeocoding
 
             return direction;
         }
-
     }
 }

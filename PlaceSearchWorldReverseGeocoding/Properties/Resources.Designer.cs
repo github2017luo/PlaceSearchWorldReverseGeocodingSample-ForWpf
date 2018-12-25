@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace PlaceSearchWorldReverseGeocoding.Properties {
+namespace ThinkGeo.MapSuite.PlaceSearchWorldReverseGeocodingSamples.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace PlaceSearchWorldReverseGeocoding.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("PlaceSearchWorldReverseGeocoding.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("ThinkGeo.MapSuite.PlaceSearchWorldReverseGeocodingSamples.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

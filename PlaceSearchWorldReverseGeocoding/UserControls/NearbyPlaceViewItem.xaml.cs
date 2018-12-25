@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using ThinkGeo.MapSuite.WorldReverseGeocoding;
 
-namespace PlaceSearchWorldReverseGeocoding.UserControls
+namespace ThinkGeo.MapSuite.PlaceSearchWorldReverseGeocodingSamples.UserControls
 {
     /// <summary>
     /// Interaction logic for NearbyPlaceViewItem.xaml
@@ -19,8 +19,16 @@ namespace PlaceSearchWorldReverseGeocoding.UserControls
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             var record = DataContext as Place;
-
-            string iconUri = string.Format("/Resources/{0}.png", record.PlaceCategory);
+            string category = null;
+            if (record.PlaceCategory.ToString().Contains(","))
+            {
+                category = record.PlaceCategory.ToString().Split(',')[1].ToLower().Trim();
+            }
+            else
+            {
+                category = record.PlaceCategory.ToString().ToLower();
+            }
+            string iconUri = string.Format("/Resources/{0}.png", category);
             if (!string.IsNullOrEmpty(iconUri))
             {
                 BitmapImage bitmap = new BitmapImage();

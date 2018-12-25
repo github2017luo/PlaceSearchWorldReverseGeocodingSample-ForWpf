@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace ThinkGeo.MapSuite.PlaceSearchWorldReverseGeocodingSamples
+namespace Wpf_PlaceSearchReverseGeocoding
 {
     /// <summary>
     /// Interaction logic for App.xaml

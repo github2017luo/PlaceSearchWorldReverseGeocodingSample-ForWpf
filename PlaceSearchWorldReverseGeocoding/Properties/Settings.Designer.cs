@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace PlaceSearchWorldReverseGeocoding.Properties {
+namespace ThinkGeo.MapSuite.PlaceSearchWorldReverseGeocodingSamples.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
