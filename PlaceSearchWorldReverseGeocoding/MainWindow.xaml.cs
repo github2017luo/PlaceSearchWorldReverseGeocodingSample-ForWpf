@@ -50,11 +50,15 @@ namespace ThinkGeo.MapSuite.PlaceSearchWorldReverseGeocodingSamples
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             wpfMap.MapUnit = GeographyUnit.Meter;
-            wpfMap.ZoomLevelSet = ThinkGeoCloudMapsOverlay.GetZoomLevelSet();
+            wpfMap.ZoomLevelSet = new ThinkGeoCloudMapsZoomLevelSet();
 
             // Add background map.
-            // Add ThinkGeoCloudMapsOverlay as basemap
-            ThinkGeoCloudMapsOverlay baseOverlay = new ThinkGeoCloudMapsOverlay();
+            /*===========================================
+               Backgrounds for this sample are powered by ThinkGeo Cloud Maps and require
+               a Client ID and Secret. These were sent to you via email when you signed up
+               with ThinkGeo, or you can register now at https://cloud.thinkgeo.com.
+            ===========================================*/
+            ThinkGeoCloudRasterMapsOverlay baseOverlay = new ThinkGeoCloudRasterMapsOverlay();
             wpfMap.Overlays.Add(baseOverlay);
 
             // Add marker overlay for showing the best matching place.
