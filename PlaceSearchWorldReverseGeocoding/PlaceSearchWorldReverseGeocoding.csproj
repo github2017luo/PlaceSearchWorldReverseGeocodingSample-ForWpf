@@ -90,9 +90,8 @@
       <HintPath>..\packages\ThinkGeo.Cloud.Client.10.6.0\lib\net45\ThinkGeo.Cloud.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ThinkGeo.MapSuite, Version=10.0.0.0, Culture=neutral, PublicKeyToken=0828af5241fb4207">
-      <HintPath>..\packages\ThinkGeo.MapSuite.10.6.0\lib\net45\ThinkGeo.MapSuite.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="ThinkGeo.MapSuite, Version=10.0.0.0, Culture=neutral, PublicKeyToken=0828af5241fb4207, processorArchitecture=MSIL">
+      <HintPath>..\packages\ThinkGeo.MapSuite.10.6.7\lib\net45\ThinkGeo.MapSuite.dll</HintPath>
     </Reference>
     <Reference Include="ThinkGeo.MapSuite.ProductCenter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=0828af5241fb4207">
       <HintPath>..\packages\ThinkGeo.MapSuite.ProductCenter.10.6.0\lib\net45\ThinkGeo.MapSuite.ProductCenter.exe</HintPath>
@@ -102,9 +101,8 @@
       <HintPath>..\packages\ThinkGeo.MapSuite.WorldReverseGeocoding.10.6.0\lib\net45\ThinkGeo.MapSuite.WorldReverseGeocoding.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ThinkGeo.MapSuite.Wpf, Version=10.0.0.0, Culture=neutral, PublicKeyToken=0828af5241fb4207">
-      <HintPath>..\packages\MapSuiteDesktopForWpf-BareBone.10.6.0\lib\net45\ThinkGeo.MapSuite.Wpf.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="ThinkGeo.MapSuite.Wpf, Version=10.0.0.0, Culture=neutral, PublicKeyToken=0828af5241fb4207, processorArchitecture=MSIL">
+      <HintPath>..\packages\MapSuiteDesktopForWpf-BareBone.10.6.18\lib\net45\ThinkGeo.MapSuite.Wpf.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
@@ -176,24 +174,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\MapSuite\MapSuite\MapSuiteSDK-WLM\MapSuiteSDK-WLM.csproj">
-      <Project>{bc3c1d57-2df4-4945-b8ee-d0fee11dd0fa}</Project>
-      <Name>MapSuiteSDK-WLM</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\ProductCenter\MapSuiteProductCenter\MapSuiteProductCenter\MapSuiteProductCenter.csproj">
-      <Project>{3c45a98c-20e2-4481-bd11-33de71fb895a}</Project>
-      <Name>MapSuiteProductCenter</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Wpf\WpfSDK-Windows\WpfSDK-Windows.csproj">
-      <Project>{35bfc330-e3c8-445a-afe7-6eaa4d76ae36}</Project>
-      <Name>WpfSDK-Windows</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\WorldReverseGeocodingSDK-WLM\WorldReverseGeocodingSDK-WLM.csproj">
-      <Project>{064187bf-44b7-4bf3-8266-92a5de34da99}</Project>
-      <Name>WorldReverseGeocodingSDK-WLM</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\aeroway.png" />
     <Resource Include="Resources\amenity.png" />
     <Resource Include="Resources\barrier.png" />
@@ -234,10 +214,10 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\MapSuiteDependency-SkiaSharp.10.6.0\build\net45\MapSuiteDependency-SkiaSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MapSuiteDependency-SkiaSharp.10.6.0\build\net45\MapSuiteDependency-SkiaSharp.targets'))" />
     <Error Condition="!Exists('..\packages\MapSuiteDependency-SQLiteCore.10.6.0\build\net45\MapSuiteDependency-SQLiteCore.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MapSuiteDependency-SQLiteCore.10.6.0\build\net45\MapSuiteDependency-SQLiteCore.targets'))" />
-    <Error Condition="!Exists('..\packages\ThinkGeo.MapSuite.10.6.0\build\net45\ThinkGeo.MapSuite.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ThinkGeo.MapSuite.10.6.0\build\net45\ThinkGeo.MapSuite.targets'))" />
+    <Error Condition="!Exists('..\packages\ThinkGeo.MapSuite.10.6.7\build\net45\ThinkGeo.MapSuite.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ThinkGeo.MapSuite.10.6.7\build\net45\ThinkGeo.MapSuite.targets'))" />
   </Target>
   <Import Project="..\packages\MapSuiteDependency-SQLiteCore.10.6.0\build\net45\MapSuiteDependency-SQLiteCore.targets" Condition="Exists('..\packages\MapSuiteDependency-SQLiteCore.10.6.0\build\net45\MapSuiteDependency-SQLiteCore.targets')" />
-  <Import Project="..\packages\ThinkGeo.MapSuite.10.6.0\build\net45\ThinkGeo.MapSuite.targets" Condition="Exists('..\packages\ThinkGeo.MapSuite.10.6.0\build\net45\ThinkGeo.MapSuite.targets')" />
+  <Import Project="..\packages\ThinkGeo.MapSuite.10.6.7\build\net45\ThinkGeo.MapSuite.targets" Condition="Exists('..\packages\ThinkGeo.MapSuite.10.6.7\build\net45\ThinkGeo.MapSuite.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
